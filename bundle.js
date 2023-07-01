@@ -151,6 +151,17 @@ var LSCG = (function (exports) {
 	        next(args);
 	    }, module);
 	}
+	/**
+	 * Linearly interpolates between two hex colors
+	 * @param {String} a : #RRGGBB
+	 * @param {String} b : #RRGGBB
+	 * @param {Number} amount : 0.0 - 1.0
+	 * @returns {String} : #RRGGBB
+	 */
+	function LerpHexColor(a, b, amount) {
+	    var ah = parseInt(a.replace(/#/g, ''), 16), ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff, bh = parseInt(b.replace(/#/g, ''), 16), br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff, rr = ar + amount * (br - ar), rg = ag + amount * (bg - ag), rb = ab + amount * (bb - ab);
+	    return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+	}
 	function OnAction(priority, module, callback) {
 	    hookFunction("ChatRoomMessage", priority, (args, next) => {
 	        var data = args[0];
@@ -2984,9 +2995,25 @@ var LSCG = (function (exports) {
 	            marks.Property.Type = this.getKissMarkTypeString(status);
 	        ChatRoomCharacterUpdate(Player);
 	    }
+	    LerpKissColors(sender) {
+	        var sender_Color = this.getKisserLipColor(sender);
+	        var receiver_Color = this.getKisserLipColor(Player);
+	        if (sender_Color === undefined || receiver_Color === undefined) {
+	            // :
+	            console.log("LerpKissColors: undefined");
+	            return "Default";
+	        }
+	        if (sender_Color == "Default" || receiver_Color == "Default") {
+	            // :(
+	            console.log("LerpKissColors: Default");
+	            return "Default";
+	        }
+	        var lerped = LerpHexColor(sender_Color[0], receiver_Color[0], 0.5);
+	        return lerped;
+	    }
 	    AddKissMark(sender, location) {
 	        var _a, _b;
-	        var color = this.getKisserLipColor(sender);
+	        var color = this.LerpKissColors(sender);
 	        if (color == "Default")
 	            return; // No lipstick
 	        var marks = this.getExistingLipstickMarks();
